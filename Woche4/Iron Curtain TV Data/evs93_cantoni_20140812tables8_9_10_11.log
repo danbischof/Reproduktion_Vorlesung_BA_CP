@@ -1,0 +1,1008 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  Z:\GWA4 - Cantoni\D_Ergebnisse\evs93_cantoni_20140812tables8_9_10_11.log
+  log type:  text
+ opened on:  12 Aug 2014, 11:18:22
+
+. 
+. ***************************************************************************
+. ***************************************************************************
+. *** Titel des Projekts: <Clueless? The impact of television on consumption behavior.>
+. *** Datengrundlage: <EVS 1993>
+. *** Dateiname des Programmcodes: evs93_cantoni_20140812tables8_9_10_11.do
+. *** erstellt: <2014/08/12> 
+. *** von: <Davide Cantoni> 
+. *** E-Mail: <cantoni@lmu.de> 
+. *** Tel.: <0176/21816773> 
+. *** Dateiname der Output-Files: <evs93_cantoni_20140812tables8_9_10_11.log> 
+. ***                     <evs93_cantoni_20140812tables8_9_10_11.txt>  
+. *** 
+. *** Grundriss des Programms: <Programm zur Untersuchung von 
+. *** Unterschieden im Konsumverhalten zwischen ehem. DDR-Regionen mit Zugang 
+. *** zu westlichen Fernsehsendern und solchen ohne.>
+. *** 
+. *** Verwendete Variablen: 
+. *** Originalvariablen:  <mehrere>
+. *** 
+. *** Neu angelegte Variablen: <bula*: Bundesland-Dummy
+. ***                             berlinost: Dummy fuer Haushalte in Ostberlin
+. ***                             smallcity: Kleinstadt-Dummy
+. ***                             age: Ungefaehres Alter 
+. ***                             agesq: (Ungefaehres Alter)^2
+. ***                             single: Alleinstehend-Dummy
+. ***                             german: Dummy fuer deutsche Nationalitaet
+. ***                             female: Dummy fuer Frauen
+. ***                             employed: Dummy fuer Vollzeitbeschaeftigte 
+. ***                             retired: Dummy fuer Rentner 
+. ***                             onwelfare: Dummy fuer Sozialhilfeempfaenger 
+. ***                             treat: Neucodierung von ard_signalstaerke
+. ***                             netincome: Umbenennung von ef19
+. ***                             disposableincome: Umbenennung von ef21
+. ***                             weight: Umbenennung von ef66
+. ***                             ef100001-ef100014: Konsumausgaben, fuer die Werbungsinformationen bereitstehen
+. ***                             ef100015: Uebrige Konsumausgaben (ohne Werbung)
+. ***                             ef: Konsumausgaben (nach Umformung des Datensatzes)
+. ***                             logef: Logarithmus der Konsumausgaben (nach Umformung des Datensatzes)
+. ***                             log0ef: Logarithmus der Konsumausgaben+1 (nach Umformung des Datensatzes)
+. ***                             good: ef-code (nach Umformung des Datensatzes)
+. ***                             totalexp: gesamte Konsumausgaben in den betrachteten Kategorien (nach Umformung des Datensatzes)
+. ***                             ef_shexp: relative Konsumausgaben in den betrachteten Kategorien (nach Umformung des Datensatzes)
+. ***                             minpd8089: Anzahl von Fernseh-Werbeminuten, 1980-1989
+. ***                             share8089: Anteil an Fernseh-Werbeminuten, 1980-1989
+. ***                             minXtre: Interaktionseffekt minpd8089*treat
+. ***                             shaXtre: Interaktionseffekt share8089*treat>
+. ***
+. *** Gewichtungsvariablen: <ef66: Umbenannt als "weight"
+. ***                             budsh: Anteil von Konsumkategorie an Gesamtausgaben
+. ***                             wmix: Produkt von weight*budsh>
+. ***
+. ***************************************************************************
+. ***************************************************************************
+. 
+.         
+.         **** Version festlegen
+. 
+. version 9.1
+
+. 
+.         **** Bildschirmausgabe steuern
+. 
+. set more off
+
+. 
+.         **** Arbeitsspeicher festlegen
+. 
+. set mem 750m
+
+. 
+.         **** Arbeitsverzeichnis festlegen
+. 
+. cd "Z:\GWA4 - Cantoni\D_Ergebnisse\"
+Z:\GWA4 - Cantoni\D_Ergebnisse
+
+. 
+.         **** Datensatz vorbereiten
+. 
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812preparedata.do"
+
+. do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+.         *** Datei umformen
+.         *** (reshape data) 
+.         
+.         * An dieser Stelle wird der Datensatz so umgeformt, dass nicht mehr jedes Individuum/Haushalt 
+.         * eine Beobachtung darstellt, sondern dass jede Kombination (Individuum*Konsumausgabe fuer 
+.         * Gut i) eine Beobachtung darstellt. Es wird also ein Panel-artiger Datensatz durch den
+.         * reshape-Befehl kreiert.
+. 
+. gen id=_n
+
+. 
+. rename ef3 bundesland
+
+. rename ef5 gemeindegr
+
+. 
+. keep ef100001 ef100002 ef100004 ef100005 ef100006 ef100007 ef100008 ef100012 ef100013 ef100014 ef100015 ///
+>         treat* ln_dispincome disposableincome kids weight id age agesq single female german employed retired onwelfare ///
+>         berlinost bula* smallcity muni dist* bundesland gemeindegr ard_signalstaerke__durchschn_
+
+. 
+. reshape long ef, i(id) j(good)
+(note: j = 100001 100002 100004 100005 100006 100007 100008 100012 100013 100014 100015)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    10096   ->  111056
+Number of variables                  40   ->      31
+j variable (11 values)                    ->   good
+xij variables:
+         ef100001 ef100002 ... ef100015   ->   ef
+-----------------------------------------------------------------------------
+
+. 
+. 
+.         *** Einfuegen der Info ueber Werbung im Fernsehen
+.         *** (adding info about minutes of advertising)
+. 
+. do "Z:\GWA4 - Cantoni\C_Programm\evs_cantoni_advertising8089.do"
+
+. 
+.         **** Advertising quantities for 1980-1989, ARD
+. 
+. gen seconds8089=.
+(111056 missing values generated)
+
+. replace seconds8089=19197 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace seconds8089=38621 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace seconds8089=62802 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace seconds8089=10358 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace seconds8089=2741 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace seconds8089=149202 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace seconds8089=12863 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace seconds8089=11210 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace seconds8089=2898 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace seconds8089=4024 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace seconds8089=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen minpd8089=seconds8089/(60*365) // minutes per day
+
+. 
+. gen share8089=.
+(111056 missing values generated)
+
+. replace share8089=5.47 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace share8089=11.00 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace share8089=17.89 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace share8089=2.95 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace share8089=0.78 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace share8089=42.50 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace share8089=3.66 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace share8089=3.19 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace share8089=0.83 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace share8089=1.15 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace share8089=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen ln_minpd8089=log(minpd8089)
+(10096 missing values generated)
+
+. replace ln_minpd8089=0 if good==100015
+(10096 real changes made)
+
+. 
+. 
+.         **** Advertising quantities for 1980-1989, ZDF
+. 
+. gen seconds8089zdf=.
+(111056 missing values generated)
+
+. replace seconds8089zdf=27279 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace seconds8089zdf=41870 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace seconds8089zdf=66919 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace seconds8089zdf=9215 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace seconds8089zdf=3840 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace seconds8089zdf=124586 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace seconds8089zdf=20039 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace seconds8089zdf=18320 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace seconds8089zdf=3035 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace seconds8089zdf=2304 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace seconds8089zdf=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen minpd8089zdf=seconds8089zdf/(60*365) // minutes per day
+
+. 
+. gen share8089zdf=.
+(111056 missing values generated)
+
+. replace share8089zdf=7.46 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace share8089zdf=11.45 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace share8089zdf=18.30 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace share8089zdf=2.52 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace share8089zdf=1.05 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace share8089zdf=34.07 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace share8089zdf=5.48 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace share8089zdf=5.01 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace share8089zdf=0.83 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace share8089zdf=0.63 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace share8089zdf=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen ln_minpd8089zdf=log(minpd8089zdf)
+(10096 missing values generated)
+
+. replace ln_minpd8089zdf=0 if good==100015
+(10096 real changes made)
+
+. 
+. 
+.         **** Advertising quantities for 1991-1997, ARD/MDR
+. 
+. gen seconds9197=.
+(111056 missing values generated)
+
+. replace seconds9197=11948 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace seconds9197=29214 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace seconds9197=34571 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace seconds9197=18303 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace seconds9197=2256 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace seconds9197=134904 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace seconds9197=8717 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace seconds9197=13026 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace seconds9197=4202 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace seconds9197=5569 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace seconds9197=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen minpd9197=seconds9197/(60*365) // minutes per day
+
+. 
+. gen share9197=.
+(111056 missing values generated)
+
+. replace share9197=3.90 if good==100001 // Media, leisure 
+(10096 real changes made)
+
+. replace share9197=9.54 if good==100002 // Cleaning and washing 
+(10096 real changes made)
+
+. replace share9197=11.30 if good==100004 // Body care + mouth care
+(10096 real changes made)
+
+. replace share9197=5.98 if good==100005 // Cars, accessories
+(10096 real changes made)
+
+. replace share9197=0.74 if good==100006 // Clothes, textiles
+(10096 real changes made)
+
+. replace share9197=44.08 if good==100007 // All(food and drinks)
+(10096 real changes made)
+
+. replace share9197=2.85 if good==100008 // Home and garden
+(10096 real changes made)
+
+. replace share9197=4.26 if good==100012 // Pharmaceuticals
+(10096 real changes made)
+
+. replace share9197=1.37 if good==100013 // Photo, optics, watches, jewelry
+(10096 real changes made)
+
+. replace share9197=1.82 if good==100014 // Transportation and tourism
+(10096 real changes made)
+
+. replace share9197=0 if good==100015 // All other private consumption
+(10096 real changes made)
+
+. 
+. gen ln_minpd9197=log(minpd9197)
+(10096 missing values generated)
+
+. replace ln_minpd9197=0 if good==100015
+(10096 real changes made)
+
+. 
+. 
+end of do-file
+
+. 
+. gen minXtre = minpd8089*treat
+
+. gen shaXtre = share8089*treat
+
+. 
+. gen minXtrepr = minpd8089*treatpr
+
+. gen shaXtrepr = share8089*treatpr
+
+. 
+. gen minXdistkm = minpd8089*distkm
+
+. gen minXdisthr = minpd8089*disthr
+
+. 
+. 
+.         *** Generierung von Ausgabenvariablen: log(Ausgaben), relative Ausgaben
+.         *** (generate alternative expenditure variables)
+. 
+. gen logef = log(ef)
+(9374 missing values generated)
+
+. gen log0ef = log(1+ef)
+
+. 
+. bysort id: egen ef40=sum(ef)
+
+. gen ef_shexp = ef/ef40
+
+. 
+. replace logef=100*logef
+(101682 real changes made)
+
+. replace log0ef=100*log0ef
+(101682 real changes made)
+
+. replace ef_shexp = 100*ef_shexp
+(101682 real changes made)
+
+. 
+.         *** Generierung der Gewichte
+.         *** (generate weights)
+. 
+. bysort good: egen totexpgood=total(ef)
+
+. egen totexp=total(ef)
+
+. gen budsh = totexpgood/totexp
+
+. 
+. gen wmix = budsh*weight
+
+. 
+. 
+. 
+end of do-file
+
+. 
+. preserve
+
+. drop if berlinost==1
+(8701 observations deleted)
+
+. 
+.         *** Umschichtung von Konsumverhalten 
+.         *** (recomposition of consumption - Table 8)
+. 
+. local controls "[pw=wmix]"
+
+. local controlsfull "ln_dispincome age agesq kids single female german employed retired onwelfare bula* smallcity [pw=wmix]"
+
+. 
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1366.46
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0558
+                                                       Root MSE      =  204.03
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.54943   .3883566    42.61   0.000     15.78758    17.31127
+       treat |  -8.960132    5.95095    -1.51   0.132    -20.63418     2.71392
+     minXtre |   1.536708   .5470771     2.81   0.005     .4634999    2.609916
+       _cons |     749.24   4.746245   157.86   0.000     739.9292    758.5507
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T8 C1, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster") replace
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. reg log0ef minpd8089 treat minXtre `controlsfull', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F( 18,  1358) =  572.79
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.1741
+                                                       Root MSE      =  190.84
+
+                                 (Std. Err. adjusted for 1359 clusters in muni)
+-------------------------------------------------------------------------------
+              |               Robust
+       log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+    minpd8089 |   16.54943   .3883851    42.61   0.000     15.78753    17.31133
+        treat |  -4.569003   2.899006    -1.58   0.115    -10.25602    1.118012
+      minXtre |   1.536708   .5471172     2.81   0.005     .4634212    2.609995
+ln_dispincome |   88.87221    2.96333    29.99   0.000     83.05901    94.68541
+          age |   3.652906    .524547     6.96   0.000     2.623895    4.681916
+        agesq |  -.0441929   .0060244    -7.34   0.000     -.056011   -.0323748
+         kids |  -.8722328   1.118179    -0.78   0.435    -3.065779    1.321314
+       single |  -43.24909   2.890886   -14.96   0.000    -48.92017     -37.578
+       female |  -6.966911   1.685756    -4.13   0.000    -10.27388   -3.659941
+       german |  -4.029448   23.09884    -0.17   0.862    -49.34273    41.28383
+     employed |  -4.505154   2.590785    -1.74   0.082    -9.587529     .577221
+      retired |   8.091927    4.71662     1.72   0.086    -1.160724    17.34458
+    onwelfare |  -20.81264   5.282243    -3.94   0.000    -31.17488    -10.4504
+        bula1 |   7.158265   3.779583     1.89   0.058    -.2561902    14.57272
+        bula2 |          0  (omitted)
+        bula3 |   3.948441   3.148422     1.25   0.210    -2.227857    10.12474
+        bula4 |   -1.78855   3.626819    -0.49   0.622    -8.903326    5.326226
+        bula5 |   2.045532   4.629777     0.44   0.659    -7.036759    11.12782
+        bula6 |          0  (omitted)
+    smallcity |  -5.940851   2.201018    -2.70   0.007    -10.25862   -1.623086
+        _cons |  -228.3671   40.86702    -5.59   0.000    -308.5365   -148.1978
+-------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T8 C2, `e(depvar)', no FE, all controls, no East Berlin, w=mix, muni cluster")
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. reg log0ef share8089 treat shaXtre `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1366.43
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0558
+                                                       Root MSE      =  204.03
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   share8089 |   2.652826   .0622513    42.61   0.000     2.530707    2.774945
+       treat |  -8.959681   5.950994    -1.51   0.132    -20.63382    2.714458
+     shaXtre |    .246306   .0876946     2.81   0.005     .0742744    .4183376
+       _cons |   749.2417   4.746306   157.86   0.000     739.9308    758.5526
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T8 C3, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster")
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. local controls "[pw=weight]"
+
+. 
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.6793e+07)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1504.62
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0511
+                                                       Root MSE      =  256.29
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   29.14197   .8244299    35.35   0.000     27.52467    30.75926
+       treat |  -9.382204   5.802241    -1.62   0.106    -20.76453    2.000125
+     minXtre |   1.978626   .9998986     1.98   0.048     .0171121    3.940139
+       _cons |   614.8457   4.480317   137.23   0.000     606.0566    623.6348
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T8 C4, `e(depvar)', no FE, no controls, no East Berlin, w=sampling, muni cluster")
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. local controls "[pw=wmix]"
+
+. 
+. reg log0ef minpd8089 treatpr minXtrepr `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1323.14
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0559
+                                                       Root MSE      =  204.01
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.07095   .4950021    32.47   0.000      15.0999      17.042
+     treatpr |  -14.26667   7.471549    -1.91   0.056     -28.9237    .3903576
+   minXtrepr |   2.132265   .7143605     2.98   0.003     .7308951    3.533635
+       _cons |   753.5986   5.673185   132.84   0.000     742.4694    764.7277
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T8 C5, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster")
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. 
+.         *** Umschichtung von Konsumverhalten: Robustheit
+.         *** (recomposition of consumption: robustness - Table 9)
+. 
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(id)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  9304) = 2075.19
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0558
+                                                       Root MSE      =  204.03
+
+                                  (Std. Err. adjusted for 9305 clusters in id)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.54943   .5123979    32.30   0.000     15.54501    17.55384
+       treat |  -8.960132   5.326581    -1.68   0.093     -19.4014    1.481133
+     minXtre |   1.536708   .5708716     2.69   0.007     .4176745    2.655741
+       _cons |     749.24   4.804829   155.93   0.000     739.8214    758.6585
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br bdec(3) ctitle("T9 C1, `e(depvar)', no FE, no controls, no East Berlin, w=mix, hh cluster")
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. restore
+
+. 
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.6843e+06)
+
+Linear regression                                      Number of obs =  111056
+                                                       F(  3,  1359) = 1542.71
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0551
+                                                       Root MSE      =  206.24
+
+                                (Std. Err. adjusted for 1360 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.54943    .388356    42.61   0.000     15.78758    17.31127
+       treat |  -10.55941   5.900811    -1.79   0.074     -22.1351    1.016274
+     minXtre |   1.583285   .5216385     3.04   0.002     .5599809    2.606589
+       _cons |     749.24   4.746239   157.86   0.000     739.9292    758.5507
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br bdec(3) ctitle("T9 C2, `e(depvar)', no FE, no controls, with East Berlin, w=mix, muni cluster") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. clear
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812preparedata.do"
+
+. 
+. preserve
+
+. drop treat
+
+. gen treat=(ard_signalstaerke__durchschn_>=-84.8)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. drop if berlinost==1
+(8701 observations deleted)
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1382.22
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0558
+                                                       Root MSE      =  204.03
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.60475   .3694875    44.94   0.000     15.87992    17.32958
+       treat |  -8.845575   5.717757    -1.55   0.122    -20.06217     2.37102
+     minXtre |   1.530283   .5439408     2.81   0.005     .4632278    2.597339
+       _cons |   748.8524   4.355351   171.94   0.000     740.3084    757.3963
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T9 C3, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, treat -84.8") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. preserve
+
+. drop treat
+
+. gen treat=(ard_signalstaerke__durchschn_>=-82.8)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. drop if berlinost==1
+(8701 observations deleted)
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1431.85
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0559
+                                                       Root MSE      =  204.02
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.53217   .3488145    47.40   0.000     15.84789    17.21644
+       treat |  -10.66374   5.714445    -1.87   0.062    -21.87383      .54636
+     minXtre |   1.640548   .5345785     3.07   0.002     .5918589    2.689238
+       _cons |   750.2527   4.311503   174.01   0.000     741.7948    758.7107
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T9 C4, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, treat -82.8") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. preserve
+
+. drop treat
+
+. gen treat=(ard_signalstaerke__durchschn_>=-80.8)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. drop if berlinost==1
+(8701 observations deleted)
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  3,  1358) = 1465.53
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0560
+                                                       Root MSE      =  204.01
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.66317   .3389432    49.16   0.000     15.99826    17.32808
+       treat |  -10.84476   5.525854    -1.96   0.050     -21.6849   -.0046264
+     minXtre |   1.531153   .5368267     2.85   0.004     .4780539    2.584253
+       _cons |   750.1188   3.963309   189.27   0.000     742.3439    757.8937
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T9 C5, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, treat -80.8") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. 
+.         *** Umschichtung von Konsumverhalten: Teil-Samples
+.         *** (recomposition of consumption: subsamples - Table 10)
+. 
+. preserve
+
+. keep if berlinost==0 & ard_signalstaerke__durchschn_>-116.8 & ard_signalstaerke__durchschn_<-56.8
+(3474 observations deleted)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   4.3173e+06)
+
+Linear regression                                      Number of obs =   72842
+                                                       F(  3,   911) = 1209.95
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0567
+                                                       Root MSE      =  205.01
+
+                                 (Std. Err. adjusted for 912 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.69914   .3885066    42.98   0.000     15.93667    17.46161
+       treat |  -11.87185    6.04504    -1.96   0.050    -23.73567   -.0080218
+     minXtre |   1.662011   .5838564     2.85   0.005     .5161508    2.807871
+       _cons |   748.4559   4.823294   155.18   0.000     738.9898     757.922
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T10 C1, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, +/-30dB") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. preserve
+
+. keep if berlinost==0 & ard_signalstaerke__durchschn_>-106.8 & ard_signalstaerke__durchschn_<-66.8
+(5241 observations deleted)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   3.1809e+06)
+
+Linear regression                                      Number of obs =   53405
+                                                       F(  3,   663) =  931.16
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0561
+                                                       Root MSE      =  202.61
+
+                                 (Std. Err. adjusted for 664 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.59563   .3895983    42.60   0.000     15.83063    17.36062
+       treat |  -10.16357   6.778919    -1.50   0.134    -23.47431    3.147164
+     minXtre |   1.509651   .6979229     2.16   0.031     .1392455    2.880056
+       _cons |   749.1515   4.904348   152.75   0.000     739.5216    758.7814
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T10 C2, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, +/-20dB") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. preserve
+
+. keep if berlinost==0 & ard_signalstaerke__durchschn_>-96.8 & ard_signalstaerke__durchschn_<-76.8
+(7725 observations deleted)
+
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre `controls', robust cluster(muni)
+(sum of wgt is   1.5146e+06)
+
+Linear regression                                      Number of obs =   26081
+                                                       F(  3,   390) =  791.31
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0522
+                                                       Root MSE      =  197.13
+
+                                 (Std. Err. adjusted for 391 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.87003   .4012126    42.05   0.000     16.08122    17.65884
+       treat |   5.496082    7.81391     0.70   0.482    -9.866576    20.85874
+     minXtre |  -.3255175   .7913492    -0.41   0.681    -1.881362    1.230327
+       _cons |   746.8655   4.856281   153.79   0.000     737.3177    756.4132
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T10 C3, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, +/-10dB") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. 
+.         *** Umschichtung von Konsumverhalten: Entfernung zur BRD
+.         *** (recomposition of consumption: distance to the west - Table 11)
+. 
+. qui do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812reshape8089.do"
+
+. keep if berlinost==0 
+(8701 observations deleted)
+
+. 
+. replace distkm=distkm/100
+(102355 real changes made)
+
+. replace minXdistkm=minXdistkm/100
+(93050 real changes made)
+
+. 
+. local controls "[pw=wmix]"
+
+. reg log0ef minpd8089 treat minXtre distkm minXdistkm `controls', robust cluster(muni)
+(sum of wgt is   6.0721e+06)
+
+Linear regression                                      Number of obs =  102355
+                                                       F(  5,  1358) =  898.15
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0558
+                                                       Root MSE      =  204.03
+
+                                (Std. Err. adjusted for 1359 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   16.90697   1.387519    12.19   0.000     14.18505    19.62888
+       treat |  -9.763439   7.717705    -1.27   0.206    -24.90336    5.376478
+     minXtre |   1.356785   .7619567     1.78   0.075    -.1379546    2.851525
+      distkm |  -.9135437   7.363725    -0.12   0.901    -15.35905    13.53197
+  minXdistkm |  -.2046131   .7648302    -0.27   0.789     -1.70499    1.295764
+       _cons |   750.8363   13.76481    54.55   0.000     723.8337    777.8389
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T11 C1, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, distance km") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. 
+. preserve
+
+. keep if treat==1
+(13970 observations deleted)
+
+. 
+. reg log0ef minpd8089 distkm minXdistkm `controls', robust cluster(muni)
+(sum of wgt is   5.3163e+06)
+
+Linear regression                                      Number of obs =   88385
+                                                       F(  3,  1193) =  854.04
+                                                       Prob > F      =  0.0000
+                                                       R-squared     =  0.0564
+                                                       Root MSE      =  204.85
+
+                                (Std. Err. adjusted for 1194 clusters in muni)
+------------------------------------------------------------------------------
+             |               Robust
+      log0ef |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+   minpd8089 |   18.23678   .9061048    20.13   0.000     16.45904    20.01451
+      distkm |  -1.702224   7.831418    -0.22   0.828    -17.06711    13.66266
+  minXdistkm |  -.1735381   .8149564    -0.21   0.831    -1.772445    1.425369
+       _cons |   741.7575   8.872047    83.61   0.000     724.3509     759.164
+------------------------------------------------------------------------------
+
+. outreg2 using evs93_cantoni_20140812tables8_9_10_11, br dec(3) ctitle("T11 C2, `e(depvar)', no FE, no controls, no East Berlin, w=mix, muni cluster, treat only") 
+C:\Program Files (x86)\Stata12\ado\base/o/outreg2.ado
+dir : seeout
+
+. restore
+
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  Z:\GWA4 - Cantoni\D_Ergebnisse\evs93_cantoni_20140812tables8_9_10_11.log
+  log type:  text
+ closed on:  12 Aug 2014, 11:18:49
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

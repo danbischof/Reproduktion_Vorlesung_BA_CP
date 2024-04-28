@@ -1,0 +1,1366 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  Z:\GWA4 - Cantoni\D_Ergebnisse\evs_cantoni_20140812table4.log
+  log type:  text
+ opened on:  12 Aug 2014, 11:21:06
+
+. 
+. ***************************************************************************
+. ***************************************************************************
+. *** Titel des Projekts: <Clueless? The impact of television on consumption behavior.>
+. *** Datengrundlage: <EVS 1993, EVS1998>
+. *** Dateiname des Programmcodes: evs_cantoni_20140812table4.do
+. *** erstellt: <2014/08/12> 
+. *** von: <Davide Cantoni> 
+. *** E-Mail: <cantoni@lmu.de> 
+. *** Tel.: <0176/21816773> 
+. *** Dateiname der Output-Files: <evs_cantoni_20140812table4.log> 
+. *** 
+. *** Grundriss des Programms: <Programm zur Untersuchung von 
+. *** Unterschieden im Konsumverhalten zwischen ehem. DDR-Regionen mit Zugang 
+. *** zu westlichen Fernsehsendern und solchen ohne.>
+. *** 
+. *** Verwendete Variablen: 
+. *** Originalvariablen:  <mehrere>
+. *** 
+. *** Neu angelegte Variablen: <bula*: Bundesland-Dummy
+. ***                             berlinost: Dummy fuer Haushalte in Ostberlin
+. ***                             smallcity: Kleinstadt-Dummy
+. ***                             age: Ungefaehres Alter 
+. ***                             agesq: (Ungefaehres Alter)^2
+. ***                             single: Alleinstehend-Dummy
+. ***                             german: Dummy fuer deutsche Nationalitaet
+. ***                             female: Dummy fuer Frauen
+. ***                             employed: Dummy fuer Vollzeitbeschaeftigte 
+. ***                             retired: Dummy fuer Rentner 
+. ***                             onwelfare: Dummy fuer Sozialhilfeempfaenger 
+. ***                             treat: Neucodierung von ard_signalstaerke
+. ***                             netincome: Umbenennung von ef19 (EVS1993)
+. ***                             disposableincome: Umbenennung von ef21 (EVS1993)
+. ***                             weight: Umbenennung von ef66 (EVS1993)>
+. ***
+. *** Gewichtungsvariablen: <ef66: Umbenannt als "weight" (EVS1993)>
+. ***
+. ***************************************************************************
+. ***************************************************************************
+. 
+.         
+.         *** Version festlegen
+. 
+. version 9.1
+
+. 
+.         *** Bildschirmausgabe steuern
+. 
+. set more off
+
+. 
+.         *** Arbeitsspeicher festlegen
+. 
+. set mem 750m
+
+. 
+.         *** Arbeitsverzeichnis festlegen
+. 
+. cd "Z:\GWA4 - Cantoni\D_Ergebnisse\"
+Z:\GWA4 - Cantoni\D_Ergebnisse
+
+. 
+.         *** Datensatz vorbereiten - EVS 1993
+.         *** (prepare dataset - EVS 1993)
+. 
+. do "Z:\GWA4 - Cantoni\C_Programm\evs93_cantoni_20140812preparedata.do"
+
+.         **** Datensatz einlesen
+. 
+. use  "Z:\GWA4 - Cantoni\A_Mikrodaten\evs1993_gwap.dta", clear
+
+. 
+. 
+.         *** Nur oestliche Bundeslaender:
+.         *** (keep only states in East Germany)
+. 
+. drop if ef3<12
+(40308 observations deleted)
+
+. 
+. 
+.         *** Generierung von (Dummy-)Variablen fuer Haushaltseigenschaften
+.         *** (generate categorical variables for household characteristics)
+. 
+. quietly tab ef3, gen(bula)
+
+. gen berlinost = ef3==22
+
+. gen smallcity = ef5==1
+
+. 
+. replace ef8u1 = 93-ef8u1
+(10096 real changes made)
+
+. rename ef8u1 age
+
+. gen agesq=age^2
+
+. 
+. gen female=0
+
+. replace female=1 if ef8u2==2
+(4107 real changes made)
+
+. 
+. gen single=.
+(10096 missing values generated)
+
+. replace single=1 if ef56==1 | ef56==2
+(1638 real changes made)
+
+. replace single=0 if ef56>2  & ef56~=.
+(8458 real changes made)
+
+. 
+. gen german=.
+(10096 missing values generated)
+
+. replace german=1 if ef8u6==1
+(10077 real changes made)
+
+. replace german=0 if ef8u6==2
+(19 real changes made)
+
+. 
+. gen employed=0
+
+. replace employed=1 if ef8u5<=6 & ef8u5~=.
+(6099 real changes made)
+
+. 
+. gen retired=0
+
+. replace retired=1 if ef8u5>=8 & ef8u5<=9
+(2114 real changes made)
+
+. 
+. gen onwelfare=0
+
+. replace onwelfare=1 if ef61==2
+(199 real changes made)
+
+. 
+. 
+.         *** Schaffung der Treatment-Variablen
+.         *** (generate treatment indicator)
+. 
+. gen treat=(ard_signalstaerke__durchschn_<-86.8)
+
+. gen treatpr=1-1/(1+exp(-(ard_signalstaerke__durchschn_+84.6)/2.3))
+
+. 
+. 
+.         *** Umdefinieren der Treatment-Variablen
+.         *** (redefine treatment indicator as treat=gets TV)
+. 
+. recode treat (0=1) (1=0)
+(treat: 10096 changes made)
+
+. replace treatpr=1-treatpr
+(10096 real changes made)
+
+. 
+. 
+.         *** Kontrollvariablen neu benennen
+.         *** (rename control variables)
+. 
+. rename ef2_sysfrei muni
+
+. rename ef58 kids
+
+. rename ef66 weight
+
+. rename ef19 netincome
+
+. rename ef21 disposableincome
+
+. rename ef26 transfers
+
+. rename entfernung_zur_brd__km_ distkm
+
+. rename entfernung_zur_brd__stunden_ disthr
+
+. 
+. gen ln_netincome = log(netincome)
+
+. gen ln_dispincome = log(disposableincome)
+
+. gen ln_transfers = log(transfers)
+(837 missing values generated)
+
+.         
+.         
+.         *** Konsum und Sparverhalten
+.         *** (consumption vs. saving)
+. 
+. gen saving = ef50+ef51-(ef382+ef383+ef384+ef385+ef386+ef387+ef388+ef389+ef390+ef391+ef392+ef393+ef394+ef395+ef396+ef397+ef398+ef399+ef400+ef401+ef402+ef624)
+
+. gen saving01 = (saving>0)
+
+. 
+. gen savingslevel=ef770
+(73 missing values generated)
+
+. gen savingslevel01 = (savingslevel>0)
+
+. 
+. 
+.         *** Kreditaufnahme
+.         *** (credit taking behavior)
+. 
+. gen int_conscredit = ef625
+
+. gen int_overdraft = ef626
+
+. 
+. foreach X in int_conscredit int_overdraft {
+  2.         gen `X'01 = (`X'>0)
+  3. }
+
+. 
+. 
+.         *** Aggregieren der Konsumvariablen in Gruppen
+.         *** (aggregate consumption expenditure variables into groups)
+. 
+. 
+. gen ef100001 = ef541+ef542+ef543+ef549+ef551+ef552+12*(ef553+ef554+ef555)+ef556+12*(ef558+ef559+ef561+ef564+ef565+ef566+ef567+ef568+ef578) // Media, leisure
+
+. gen ef100002 = 12*(ef498+ef499) // Cleaning and washing
+
+. gen ef100004 = ef510+12*(ef514+ef515+ef516+ef517+ef518) // Body care + mouth care
+
+. gen ef100005 = ef519+ef520+ef523+ef525+ef526+12*ef527+ef528+ef530+12*ef531+ef534 // Cars, accessories
+
+. gen ef100006 = ef32+12*ef581 // Clothes, textiles
+
+. gen ef100007 = ef31 // Food + sweets + Milk + non-alcoholic beverages + Hot drinks + Beer, wine + Liquors
+
+. gen ef100008 = ef35+12*(ef569+ef570+ef571+ef572) // Home and garden
+
+. gen ef100012 = 12*(ef504+ef505+ef506) // Pharmaceuticals
+
+. gen ef100013 = ef546+12*(ef547+ef548)+12*ef550+12*(ef557+ef560)+ef579 // Photo, optics, watches, jewelry
+
+. gen ef100014 = 12*ef535+ef536+ef537+ef540+ef583+ef584+ef585+ef586+ef587+ef588+ef589+ef590+ef591 // Transportation and tourism
+
+. 
+. gen ef100015 = ef40-ef100001-ef100002-ef100004-ef100005-ef100006-ef100007-ef100008-ef100012-ef100013-ef100014 // All other private consumption
+
+. gen ef100000 = ef100001+ef100002+ef100004+ef100005+ef100006+ef100007+ef100008+ef100012+ef100013+ef100014 // All advertised consumption
+
+. gen ef100100 = ef40 // All private consumption
+
+. 
+. foreach X of numlist 0(1)15 100 {
+  2.         cap gen ln_ef`=100000+`X'' = log(ef`=100000+`X'')
+  3. }
+
+. 
+. foreach X of numlist 0(1)15 100 {
+  2.         cap gen ln0_ef`=100000+`X'' = log(1+ef`=100000+`X'')
+  3. }
+
+. 
+. foreach X of numlist 0(1)15 {
+  2.         cap gen sh_ef`=100000+`X'' = ef`=100000+`X''/ef100100
+  3. }
+
+. 
+. 
+. 
+end of do-file
+
+. 
+.         *** Testen der Vergleichbarkeit der "Treatment"-Gruppen
+.         *** unter Beruecksichtigung der Gewichtungsvariable
+.         *** (testing balancedness of the sample, weighted)
+.         
+. drop if berlinost==1
+(791 observations deleted)
+
+. 
+. svyset [w=weight]
+(sampling weights assumed)
+
+      pweight: weight
+          VCE: linearized
+  Single unit: missing
+     Strata 1: <one>
+         SU 1: <observations>
+        FPC 1: <zero>
+
+. 
+. tempname p
+
+. postfile `p' str12 variable float ncont ntreat mucont mutreat diff sediff pvalue using ttests_evs93, replace
+(note: file ttests_evs93.dta not found)
+
+. 
+. foreach X of varlist disposableincome age kids single female german employed retired onwelfare smallcity {
+  2.         local counter=`=`counter'+1'
+  3.         disp in white  ""
+  4.         disp in white  "Two-sample t test of variable `X'"
+  5.         disp in white  "========================================"
+  6.         svy: mean `X', over(treat)
+  7.         matrix means=e(b)
+  8.         local mucont=means[1,1] 
+  9.         local mutreat=means[1,2] 
+ 10. 
+.         lincom [`X']1 - [`X']0
+ 11.         local diff=r(estimate) 
+ 12.         local sediff=r(se) 
+ 13.         local pvalue=2*ttail(r(df), abs(r(estimate)/r(se))) 
+ 14.         
+.         count if `X'<. & treat==1
+ 15.         local ntreat=r(N)
+ 16.         count if `X'<. & treat==0
+ 17.         local ncont=r(N)
+ 18. 
+.         post `p' ("`X'") (`ncont') (`ntreat') (`mucont') (`mutreat') (`diff') (`sediff') (`pvalue') 
+ 19. 
+. }
+
+Two-sample t test of variable disposableincome
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+------------------------------------------------------------------
+                 |             Linearized
+            Over |       Mean   Std. Err.     [95% Conf. Interval]
+-----------------+------------------------------------------------
+disposableincome |
+               0 |   41676.38   946.8173      39820.41    43532.35
+               1 |   41268.77   401.8834      40480.99    42056.55
+------------------------------------------------------------------
+
+ ( 1)  - [disposableincome]0 + [disposableincome]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -407.6165   1028.578    -0.40   0.692    -2423.855    1608.622
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable age
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+age          |
+           0 |   47.91582    .915853      46.12055    49.71109
+           1 |   50.09349   .3747438      49.35891    50.82807
+--------------------------------------------------------------
+
+ ( 1)  - [age]0 + [age]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   2.177676   .9895553     2.20   0.028     .2379307    4.117421
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable kids
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+kids         |
+           0 |   .7865616    .042645      .7029682    .8701551
+           1 |   .6592811   .0152375      .6294123    .6891499
+--------------------------------------------------------------
+
+ ( 1)  - [kids]0 + [kids]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.1272805   .0452855    -2.81   0.005      -.21605   -.0385111
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable single
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+single       |
+           0 |   .2458477   .0213095      .2040763    .2876191
+           1 |   .2818962   .0098992      .2624916    .3013008
+--------------------------------------------------------------
+
+ ( 1)  - [single]0 + [single]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0360485   .0234966     1.53   0.125      -.01001     .082107
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable female
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+female       |
+           0 |    .430171   .0230331       .385021    .4753209
+           1 |   .4224865   .0098281      .4032212    .4417518
+--------------------------------------------------------------
+
+ ( 1)  - [female]0 + [female]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0076845   .0250423    -0.31   0.759    -.0567729     .041404
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable german
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+german       |
+           0 |   .9984188   .0012203      .9960267    1.000811
+           1 |   .9967097   .0012707      .9942188    .9992005
+--------------------------------------------------------------
+
+ ( 1)  - [german]0 + [german]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0017091   .0017618    -0.97   0.332    -.0051626    .0017444
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable employed
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+employed     |
+           0 |   .4976411    .022636      .4532697    .5420126
+           1 |   .5165655   .0101438      .4966814    .5364495
+--------------------------------------------------------------
+
+ ( 1)  - [employed]0 + [employed]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0189243   .0248049     0.76   0.446    -.0296987    .0675474
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable retired
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+retired      |
+           0 |    .247886   .0217678      .2052164    .2905556
+           1 |   .2735409   .0097119      .2545035    .2925783
+--------------------------------------------------------------
+
+ ( 1)  - [retired]0 + [retired]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0256549    .023836     1.08   0.282    -.0210689    .0723787
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable onwelfare
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+onwelfare    |
+           0 |   .0273373   .0085074       .010661    .0440136
+           1 |   .0245229   .0026681      .0192928     .029753
+--------------------------------------------------------------
+
+ ( 1)  - [onwelfare]0 + [onwelfare]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0028144    .008916    -0.32   0.752    -.0202917    .0146628
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+Two-sample t test of variable smallcity
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =     9305
+Number of PSUs   =    9305         Population size  =  6072121
+                                   Design df        =     9304
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+smallcity    |
+           0 |   .1897278   .0191546      .1521805     .227275
+           1 |   .2143591   .0073344      .1999822     .228736
+--------------------------------------------------------------
+
+ ( 1)  - [smallcity]0 + [smallcity]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0246313   .0205108     1.20   0.230    -.0155743     .064837
+------------------------------------------------------------------------------
+ 8035
+ 1270
+
+. 
+. postclose `p'
+
+. 
+.         *** Ausgabe einer Zusammenfassung der Ergebnisse der t-tests
+.         *** (print summary of t-tests)
+. 
+. preserve
+
+. 
+. use "Z:\GWA4 - Cantoni\D_Ergebnisse\ttests_evs93.dta", clear
+
+. 
+. format mucont mutreat diff sediff pvalue %9.3f
+
+. list variable ntreat ncont mutreat mucont diff sediff pvalue, clean
+
+           variable   ntreat   ncont     mutreat      mucont       diff     sediff   pvalue  
+  1.   disposablein     8035    1270   41268.766   41676.383   -407.616   1028.578    0.692  
+  2.            age     8035    1270      50.093      47.916      2.178      0.990    0.028  
+  3.           kids     8035    1270       0.659       0.787     -0.127      0.045    0.005  
+  4.         single     8035    1270       0.282       0.246      0.036      0.023    0.125  
+  5.         female     8035    1270       0.422       0.430     -0.008      0.025    0.759  
+  6.         german     8035    1270       0.997       0.998     -0.002      0.002    0.332  
+  7.       employed     8035    1270       0.517       0.498      0.019      0.025    0.446  
+  8.        retired     8035    1270       0.274       0.248      0.026      0.024    0.282  
+  9.      onwelfare     8035    1270       0.025       0.027     -0.003      0.009    0.752  
+ 10.      smallcity     8035    1270       0.214       0.190      0.025      0.021    0.230  
+
+. 
+. restore
+
+. 
+. erase "Z:\GWA4 - Cantoni\D_Ergebnisse\ttests_evs93.dta"
+
+. 
+. 
+. 
+.         *** Datensatz vorbereiten - EVS 1998
+.         *** (prepare dataset - EVS 1998)
+. 
+. clear
+
+. do "Z:\GWA4 - Cantoni\C_Programm\evs98_cantoni_20140812preparedata.do"
+
+.         **** Datensatz einlesen
+. 
+. use "Z:\GWA4 - Cantoni\A_Mikrodaten\evs1998_gwap.dta", clear
+
+. 
+. 
+.         *** Nur oestliche Bundeslaender:
+.         *** (keep only states in East Germany)
+. 
+. drop if ef4<12
+(49244 observations deleted)
+
+. 
+.         *** Generierung von (Dummy)-Variablen fuer Haushaltseigenschaften
+.         *** (generate categorical variables for household characteristics)
+. 
+. quietly tab ef4, gen(bula)
+
+. gen berlinost = ef4==22
+
+. gen smallcity = ef6==1
+
+. 
+. replace ef9u3=98-ef9u3 if ef9u3~=99
+(12716 real changes made)
+
+. replace ef9u3=100 if ef9u3==99
+(0 real changes made)
+
+. 
+. rename ef9u3 age
+
+. gen agesq=age^2
+
+. 
+. gen single=.
+(12906 missing values generated)
+
+. replace single=1 if ef91==1 | ef91==2
+(2495 real changes made)
+
+. replace single=0 if ef91>2  & ef91~=.
+(10411 real changes made)
+
+. 
+. gen female=0
+
+. replace female=1 if ef9u2==2
+(5296 real changes made)
+
+. 
+. gen german=.
+(12906 missing values generated)
+
+. replace german=1 if ef9u5==1
+(12862 real changes made)
+
+. replace german=0 if ef9u5==2 | ef9u5==3
+(44 real changes made)
+
+. 
+. gen employed=0
+
+. replace employed=1 if ef9u7>=1 & ef9u7<=5
+(8172 real changes made)
+
+. 
+. gen retired=0
+
+. replace retired=1 if ef9u7==8 | ef9u7==7
+(3566 real changes made)
+
+. 
+. gen kids=.
+(12906 missing values generated)
+
+. replace kids=ef81+ef82+ef83+ef84+ef85
+(12906 real changes made)
+
+. 
+. gen onwelfare=0
+
+. replace onwelfare=1 if ef90>=1
+(113 real changes made)
+
+. 
+. 
+.         *** Schaffung der Treatment-Variablen
+.         *** (generate treatment indicator)
+. 
+. gen treat=(ard_signalstaerke__durchschn_<-86.8)
+
+. gen treatpr=1-1/(1+exp(-(ard_signalstaerke__durchschn_+84.6)/2.3))
+
+. 
+. gen treatzdf=(zdf_signalstaerke__durchschn_<-86.8)
+
+. 
+. gen treatmax=treat*treatzdf // maximum treatment definition: gets neither ZDF nor ARD
+
+. 
+.         *** Umdefinieren der Treatment-Variablen
+.         *** (redefine treatment indicator as treat=gets TV)
+. 
+. recode treat (0=1) (1=0)
+(treat: 12906 changes made)
+
+. recode treatzdf (0=1) (1=0)
+(treatzdf: 12906 changes made)
+
+. recode treatmax (0=1) (1=0)
+(treatmax: 12906 changes made)
+
+. 
+. 
+.         *** Kontrollvariablen neu benennen
+.         *** (rename control variables)
+. 
+. rename ef2_sysfrei muni
+
+. rename ef95 weight 
+
+. rename ef20 netincome
+
+. rename ef21 disposableincome
+
+. rename ef26 transfers
+
+. rename entfernung_zur_brd__km_ distkm
+
+. rename entfernung_zur_brd__stunden_ disthr
+
+. gen ln_netincome = log(netincome)
+
+. gen ln_dispincome = log(disposableincome)
+
+. gen ln_transfers = log(transfers)
+(1351 missing values generated)
+
+.         
+.         
+.                 *** Konsum und Sparverhalten
+.                 *** (consumption vs. saving)
+.         
+. gen saving = ef46+ef47-(ef467+ef468+ef469+ef470+ef471+ef472+ef473+ef474+ef475+ef476+ef477+ef478+ef479+ef480+ef481+ef482+ef483+ef484+ef485+ef486+ef440+ef441+ef442+ef443+ef444+ef
+> 445+ef446)
+
+. gen saving01 = (saving>0)
+
+.         
+. gen savingslevel=ef58
+
+. gen savingslevel01 = (savingslevel>0)
+
+. 
+.         
+.                 *** Kreditaufnahme
+.                 *** (credit taking behavior)
+.         
+. gen conscredit = ef480+ef481+ef482+ef483+ef484+ef485+ef486
+
+. gen mortgage = ef477+ef478+ef479
+
+. gen int_conscredit = ef720
+
+. gen int_overdraft = ef721
+
+. gen int_mortgage = ef718
+
+.         
+. foreach X in conscredit mortgage int_conscredit int_overdraft int_mortgage {
+  2.         gen `X'01 = (`X'>0)
+  3. }
+
+.         
+.         
+.                 *** Ausstattung mit Gebrauchsguetern 
+.                 *** (ownership of consumer durables)
+.         
+. gen carnew01 = (ef779>0)
+
+. gen carused01 = (ef780>0)
+
+. gen car01 = max(carnew01,carused01)
+
+.         
+. gen tv01 = (ef784>0)
+
+.         
+. gen vcr01 = (ef785>0)
+
+. gen dishw01 = (ef803>0)
+
+. gen mwave01 = (ef804>0)
+
+. gen washer01 = (ef806>0)
+
+. gen dryer01 = (ef807>0)
+
+.         
+. gen fridge01 = (ef801>0)
+
+. gen freezer01 = (ef802>0)
+
+. gen fridgeany01 = max(fridge01,freezer01)
+
+.         
+. 
+.         *** Aggregieren der Konsumvariablen in Gruppen
+.         *** (aggregate consumption expenditure variables into groups)
+. 
+. 
+. gen ef100001 = ef668+ef669+ef674+ef675+ef676+ef680+ef681+ef682+ef683+ef684+ef685+ef686+ef687 // Media, leisure
+
+. gen ef100002 = ef642 // Cleaning and washing
+
+. gen ef100004 = ef648+ef699+ef700 // Body care + Mouth care
+
+. gen ef100005 = ef651+ef652+ef655+ef656+ef657+ef658+ef659 // Cars, accessories
+
+. gen ef100006 = ef30 // Clothes, textiles
+
+. gen ef100007 = ef583 // Food + sweets + Milk + non-alcoholic beverages + Hot drinks + Beer, wine + Liquors
+
+. gen ef100008 = ef33+ef677 // Home and garden
+
+. gen ef100012 = ef644+ef645 // Pharmaceuticals
+
+. gen ef100013 = ef670+ef672+ef673+ef701 // Photo, optics, watches, jewelry
+
+. gen ef100014 = ef660+ef661+ef662+ef663+ef664+ef688+ef689+ef697 // Transportation and tourism
+
+. 
+. gen ef100015 = ef41-ef100001-ef100002-ef100004-ef100005-ef100006-ef100007-ef100008-ef100012-ef100013-ef100014 // All other private consumption
+
+. gen ef100000 = ef100001+ef100002+ef100004+ef100005+ef100006+ef100007+ef100008+ef100012+ef100013+ef100014 // All advertised consumption
+
+. gen ef100100 = ef41 // All private consumption
+
+. 
+. foreach X of numlist 0(1)15 100 {
+  2.         cap gen ln_ef`=100000+`X'' = log(ef`=100000+`X'')
+  3. }
+
+. 
+. foreach X of numlist 0(1)15 100 {
+  2.         cap gen ln0_ef`=100000+`X'' = log(1+ef`=100000+`X'')
+  3. }
+
+. 
+. foreach X of numlist 0(1)15 {
+  2.         cap gen sh_ef`=100000+`X'' = ef`=100000+`X''/ef41
+  3. }
+
+. 
+end of do-file
+
+. replace disposableincome=4*disposableincome // values are defined per quarter in EVS98
+(12906 real changes made)
+
+. 
+.         *** Testen der Vergleichbarkeit der "Treatment"-Gruppen
+.         *** unter Beruecksichtigung der Gewichtungsvariable
+.         *** (testing balancedness of the sample, weighted)
+.         
+. drop if berlinost==1
+(1112 observations deleted)
+
+. 
+. svyset [w=weight]
+(sampling weights assumed)
+
+      pweight: weight
+          VCE: linearized
+  Single unit: missing
+     Strata 1: <one>
+         SU 1: <observations>
+        FPC 1: <zero>
+
+. 
+. tempname p
+
+. postfile `p' str12 variable float ncont ntreat mucont mutreat diff sediff pvalue using ttests_evs98, replace
+(note: file ttests_evs98.dta not found)
+
+. 
+. foreach X of varlist disposableincome age kids single female german employed retired onwelfare smallcity {
+  2.         local counter=`=`counter'+1'
+  3.         disp in white  ""
+  4.         disp in white  "Two-sample t test of variable `X'"
+  5.         disp in white  "========================================"
+  6.         svy: mean `X', over(treat)
+  7.         matrix means=e(b)
+  8.         local mucont=means[1,1] 
+  9.         local mutreat=means[1,2] 
+ 10. 
+.         lincom [`X']1 - [`X']0
+ 11.         local diff=r(estimate) 
+ 12.         local sediff=r(se) 
+ 13.         local pvalue=2*ttail(r(df), abs(r(estimate)/r(se))) 
+ 14.         
+.         count if `X'<. & treat==1
+ 15.         local ntreat=r(N)
+ 16.         count if `X'<. & treat==0
+ 17.         local ncont=r(N)
+ 18. 
+.         post `p' ("`X'") (`ncont') (`ntreat') (`mucont') (`mutreat') (`diff') (`sediff') (`pvalue') 
+ 19. 
+. }
+
+Two-sample t test of variable disposableincome
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+------------------------------------------------------------------
+                 |             Linearized
+            Over |       Mean   Std. Err.     [95% Conf. Interval]
+-----------------+------------------------------------------------
+disposableincome |
+               0 |   48201.04   1027.764      46186.46    50215.63
+               1 |    49807.8   410.1394      49003.86    50611.74
+------------------------------------------------------------------
+
+ ( 1)  - [disposableincome]0 + [disposableincome]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   1606.754   1106.577     1.45   0.147    -562.3193    3775.827
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable age
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+age          |
+           0 |   52.72713   .7154008      51.32483    54.12943
+           1 |   51.66005    .261381       51.1477     52.1724
+--------------------------------------------------------------
+
+ ( 1)  - [age]0 + [age]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -1.067085    .761655    -1.40   0.161    -2.560054    .4258851
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable kids
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+kids         |
+           0 |   .3467643   .0195566      .3084301    .3850984
+           1 |   .4085256   .0086625      .3915458    .4255055
+--------------------------------------------------------------
+
+ ( 1)  - [kids]0 + [kids]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0617614   .0213892     2.89   0.004      .019835    .1036878
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable single
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+single       |
+           0 |   .3580096   .0196455      .3195011    .3965181
+           1 |   .3026081   .0074027      .2880976    .3171186
+--------------------------------------------------------------
+
+ ( 1)  - [single]0 + [single]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0554016    .020994    -2.64   0.008    -.0965532   -.0142499
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable female
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+female       |
+           0 |   .4382163   .0181527      .4026339    .4737986
+           1 |   .4246326    .007074      .4107664    .4384988
+--------------------------------------------------------------
+
+ ( 1)  - [female]0 + [female]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0135837   .0194824    -0.70   0.486    -.0517724    .0246051
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable german
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+german       |
+           0 |   .9986243   .0008433      .9969714    1.000277
+           1 |   .9951477   .0009767      .9932332    .9970622
+--------------------------------------------------------------
+
+ ( 1)  - [german]0 + [german]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0034766   .0012904    -2.69   0.007     -.006006   -.0009473
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable employed
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+employed     |
+           0 |   .5298753   .0181087      .4943793    .5653714
+           1 |   .5524107   .0071292      .5384362    .5663851
+--------------------------------------------------------------
+
+ ( 1)  - [employed]0 + [employed]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0225353   .0194615     1.16   0.247    -.0156125    .0606832
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable retired
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+retired      |
+           0 |   .3634239   .0184651      .3272293    .3996185
+           1 |   .3455119   .0071518      .3314932    .3595307
+--------------------------------------------------------------
+
+ ( 1)  - [retired]0 + [retired]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   -.017912   .0198017    -0.90   0.366    -.0567266    .0209026
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable onwelfare
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+onwelfare    |
+           0 |   .0090836   .0028041      .0035871    .0145801
+           1 |   .0155688    .002127      .0113994    .0197381
+--------------------------------------------------------------
+
+ ( 1)  - [onwelfare]0 + [onwelfare]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0064851   .0035196     1.84   0.065    -.0004138    .0133841
+------------------------------------------------------------------------------
+10147
+ 1647
+
+Two-sample t test of variable smallcity
+========================================
+(running mean on estimation sample)
+
+Survey: Mean estimation
+
+Number of strata =       1         Number of obs    =    11794
+Number of PSUs   =   11794         Population size  =  6180782
+                                   Design df        =    11793
+
+            0: treat = 0
+            1: treat = 1
+
+--------------------------------------------------------------
+             |             Linearized
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+smallcity    |
+           0 |   .1737211   .0121729      .1498601     .197582
+           1 |   .2368666   .0057965      .2255045    .2482287
+--------------------------------------------------------------
+
+ ( 1)  - [smallcity]0 + [smallcity]1 = 0
+
+------------------------------------------------------------------------------
+        Mean |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0631456   .0134826     4.68   0.000     .0367175    .0895736
+------------------------------------------------------------------------------
+10147
+ 1647
+
+. 
+. postclose `p'
+
+. 
+.         *** Ausgabe einer Zusammenfassung der Ergebnisse der t-tests
+.         *** (print summary of t-tests)
+. 
+. preserve
+
+. 
+. use "Z:\GWA4 - Cantoni\D_Ergebnisse\ttests_evs98.dta", clear
+
+. 
+. format mucont mutreat diff sediff pvalue %9.3f
+
+. list variable ntreat ncont mutreat mucont diff sediff pvalue, clean
+
+           variable   ntreat   ncont     mutreat      mucont       diff     sediff   pvalue  
+  1.   disposablein    10147    1647   49807.797   48201.043   1606.754   1106.577    0.147  
+  2.            age    10147    1647      51.660      52.727     -1.067      0.762    0.161  
+  3.           kids    10147    1647       0.409       0.347      0.062      0.021    0.004  
+  4.         single    10147    1647       0.303       0.358     -0.055      0.021    0.008  
+  5.         female    10147    1647       0.425       0.438     -0.014      0.019    0.486  
+  6.         german    10147    1647       0.995       0.999     -0.003      0.001    0.007  
+  7.       employed    10147    1647       0.552       0.530      0.023      0.019    0.247  
+  8.        retired    10147    1647       0.346       0.363     -0.018      0.020    0.366  
+  9.      onwelfare    10147    1647       0.016       0.009      0.006      0.004    0.065  
+ 10.      smallcity    10147    1647       0.237       0.174      0.063      0.013    0.000  
+
+. 
+. restore
+
+. 
+. erase "Z:\GWA4 - Cantoni\D_Ergebnisse\ttests_evs98.dta"
+
+. 
+. log close
+      name:  <unnamed>
+       log:  Z:\GWA4 - Cantoni\D_Ergebnisse\evs_cantoni_20140812table4.log
+  log type:  text
+ closed on:  12 Aug 2014, 11:21:14
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
