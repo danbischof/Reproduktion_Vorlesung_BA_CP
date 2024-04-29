@@ -12,40 +12,27 @@ library(tmap)
 
 
 # Load the data
-signal_data <- read_excel("Iron Curtain TV Data/match_signalanddistance_GKZ19921231.xlsx")
+signal_data <- read_excel("/Users/danielbischof/Documents/GitHub/Reproduktion_Vorlesung_BA_CP/Woche4/Iron Curtain TV Data/match_signalanddistance_GKZ19971231.xlsx")
 
 # Load the shapefile or spatial data for the map
-shape_data <- st_read("vg-hist.utm32s.shape/daten/utm32s/shape/GEM_2013_ew.shp") # or another format as appropriate
+shape_data <- st_read("vg1000_1997-12-31.utm32w.shape.ebenen/vg1000_ebenen-historisch/de9712/vg1000gem.shp") # or another format as appropriate
+
+shape_data <- shape_data %>%
+  filter(KEY >= 01054078)
 
 # Ok, damit wir die Datensätze miteinander verbinden können, brauchen wir Variablen die gleich heißen und identisch sind: 
 ## AGS scheint gleich aber unterschiedlich benannt. Ändern wir: 
 signal_data <- signal_data %>%
-  rename(AGS = `AGS 19921231`) %>% 
+  rename(AGS = `AGS 19971231`) %>% 
     rename(signal_strength = `ARD Signalstaerke (durchschn)`) %>% 
       rename(dis_brd = `Entfernung zur BRD (km)`) %>% 
         rename(GEN = Name)
 
-signal_data <- signal_data[signal_data$AGS > 11000000, ]
-shape_data <- shape_data[shape_data$AGS > 11000000, ]
+shape_data <- shape_data %>%
+  rename(AGS = KEY)
 
-## some of the AGS are not correct: 
-signal_data <- signal_data %>%
-  mutate(
-    AGS = ifelse(
-      AGS == 1.1e+07,
-      "11000000",
-      AGS
-    ),
-    AGS = ifelse(
-      substr(AGS, 1, 2) == '15' & grepl("^15[123]", AGS),
-      paste0('15', '0', substr(AGS, 4, nchar(AGS))),
-      AGS
-    )
-  ) %>%
-  # Ensure AGS is a character and remove any scientific notation
-  mutate(AGS = format(AGS, scientific = FALSE)) %>%
-  # If AGS must be numeric, convert it and ensure leading zeros where needed
-  mutate(AGS = as.character(sprintf("%08d", as.numeric(AGS))))
+#signal_data <- signal_data[signal_data$AGS > 11000000, ]
+#shape_data <- shape_data[shape_data$AGS > 11000000, ]
 
 
 # Wir cleanen die Daten etwas, da ist viel drin was wir nicht brauchen: 
@@ -54,24 +41,9 @@ signal_data <- signal_data %>%
 # Merge the signal data with the spatial data if needed
 map_data <- merge(shape_data, signal_data, by = "GEN")
 
-# Remove rows with NA in signal_strength
-map_data <- map_data[!is.na(map_data$dis_brd), ]
-
-na_count <- sum(is.na(map_data$signal_strength))
-print(na_count)
-
-unique(map_data$STG)
-
-geometry_na_count <- sum(is.na(st_geometry(map_data)))
-print(paste("NA in geometry:", geometry_na_count))
 
 # Find the range of the signal_strength values
 range_vals <- range(map_data$dis_brd, na.rm = TRUE)
-
-duplicates <- signal_data[duplicated(signal_data$AGS), ]
-print(duplicates)
-
-signal_data <- signal_data[!duplicated(signal_data$AGS), ]
 
 # Plot the map with adjustments for scale_fill_viridis_c
 ggplot(data = map_data) +
