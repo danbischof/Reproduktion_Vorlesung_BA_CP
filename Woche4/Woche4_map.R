@@ -77,7 +77,7 @@ breaks <- c(0, 15, 30, 60, 90, 120)
 labels <- c("0-15", "15-30", "30-60", "60-90", "90-120", ">120")
 
 # Plot the map with specified color scale and regional borders
-ggplot(data = map_data) +
+map <- ggplot(data = map_data) +
   geom_sf(aes(fill = dis_brd)) +
   geom_sf(data = region_data, fill = NA, color = "white", size = 0.5) + # Add regional borders
   scale_fill_gradientn(
@@ -90,4 +90,6 @@ ggplot(data = map_data) +
   labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to FRG (km)") +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 12))
+
+ggsave("fig1_tearcurtain.pdf", plot = map, device = "pdf")
 
