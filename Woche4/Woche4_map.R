@@ -39,40 +39,55 @@ shape_data <- shape_data %>%
 
 
 # Merge the signal data with the spatial data if needed
-map_data <- merge(shape_data, signal_data, by = "GEN")
+map_data <- merge(shape_data, signal_data, by = "AGS")
 
 
 # Find the range of the signal_strength values
 range_vals <- range(map_data$dis_brd, na.rm = TRUE)
 
-# Plot the map with adjustments for scale_fill_viridis_c
+# Define breaks and labels
+breaks <- c(0, 15, 30, 60, 90, 120)
+labels <- c("0-15", "15-30", "30-60", "60-90", "90-120", ">120")
+
+# Plot the map with specified color scale
 ggplot(data = map_data) +
   geom_sf(aes(fill = dis_brd)) +
-  scale_fill_viridis_c(
-    limits = c(0, 254),  # Extend the limits to include the full range of your data
-    na.value = "white"  # Set a color for NA values
+  scale_fill_gradientn(
+    colors = rev(gray.colors(length(breaks) - 1)),  # Gray scale for map colors
+    breaks = breaks,
+    labels = labels,
+    limits = c(0, 120),
+    na.value = "black"
   ) +
-  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989") +
+  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to BRD (km)") +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 12))
 
-# Plot the map with grayscale colors
-ggplot(data = map_data) +
-  geom_sf(aes(fill = dis_brd), lwd = 0.1, color = "black") +  # lwd = 0.1 makes the border lines thin
-  scale_fill_gradient(
-    low = "black",  # Close to border
-    high = "white",  # Far from border
-    na.value = NA,  # No fill for missing values
-    name = "Distance to West Germany (km)"
-  ) +
-  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989") +
-  theme_void() +  # Removes most theme elements
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-    legend.position = "none"  # Turns off the legend
-  )
 
+
+
+# Load the shapefile for regions
+region_data <- st_read("vg-hist.utm32s.shape/daten/utm32s/shape/VG-Hist_1989-12-31_LAN.shp")
+
+region_data <- region_data %>%
+  filter(STG == "DDR")
+
+# Define breaks and labels
+breaks <- c(0, 15, 30, 60, 90, 120)
+labels <- c("0-15", "15-30", "30-60", "60-90", "90-120", ">120")
+
+# Plot the map with specified color scale and regional borders
 ggplot(data = map_data) +
   geom_sf(aes(fill = dis_brd)) +
-  scale_fill_gradient(low = "black", high = "white") +
-  theme_void()
+  geom_sf(data = region_data, fill = NA, color = "white", size = 0.5) + # Add regional borders
+  scale_fill_gradientn(
+    colors = rev(gray.colors(length(breaks) - 1)),  # Gray scale for map colors
+    breaks = breaks,
+    labels = labels,
+    limits = c(0, 120),
+    na.value = "black"
+  ) +
+  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to FRG (km)") +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 12))
+
