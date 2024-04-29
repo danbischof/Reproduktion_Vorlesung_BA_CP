@@ -87,7 +87,7 @@ map <- ggplot(data = map_data) +
     limits = c(0, 120),
     na.value = "black"
   ) +
-  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to FRG (km)") +
+  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to BRD (km)") +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 12))
 
