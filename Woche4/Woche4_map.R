@@ -98,7 +98,7 @@ ggsave("fig1_distance.pdf", plot = map, device = "pdf")
 map2 <- ggplot(data = map_data) +
   geom_sf(aes(fill = signal_strength)) +
   geom_sf(data = region_data, fill = NA, color = "white", size = 0.5) + # Add regional borders
-  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to BRD (km)") +
+  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "") +
   scale_fill_gradientn(
     colors = c("black", "white"),  # Gradient from black to white
     values = scales::rescale(c(-120, -85, -60, -40, -30, 0)),  # Match scale to data range
