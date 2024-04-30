@@ -76,7 +76,7 @@ region_data <- region_data %>%
 breaks <- c(0, 15, 30, 60, 90, 120)
 labels <- c("0-15", "15-30", "30-60", "60-90", "90-120", ">120")
 
-# Plot the map with specified color scale and regional borders
+# Ok, first plot is distance to the border which in essence seems to be the same as signal strength...
 map <- ggplot(data = map_data) +
   geom_sf(aes(fill = dis_brd)) +
   geom_sf(data = region_data, fill = NA, color = "white", size = 0.5) + # Add regional borders
@@ -91,5 +91,22 @@ map <- ggplot(data = map_data) +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 12))
 
-ggsave("fig1_tearcurtain.pdf", plot = map, device = "pdf")
+ggsave("fig1_distance.pdf", plot = map, device = "pdf")
+
+
+# Now signal strength: 
+map2 <- ggplot(data = map_data) +
+  geom_sf(aes(fill = signal_strength)) +
+  geom_sf(data = region_data, fill = NA, color = "white", size = 0.5) + # Add regional borders
+  labs(title = "Signal Strength (ARD) in East German Municipalities, 1989", fill = "Distance to BRD (km)") +
+  scale_fill_gradientn(
+    colors = c("black", "white"),  # Gradient from black to white
+    values = scales::rescale(c(-120, -85, -60, -40, -30, 0)),  # Match scale to data range
+    limits = range(map_data$signal_strength, na.rm = TRUE), # Ensure the limits match the range in the data
+    na.value = "white" # Handle NA values gracefully
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 12))
+
+ggsave("fig1_signal.pdf", plot = map2, device = "pdf")
 
